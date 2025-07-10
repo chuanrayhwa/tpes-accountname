@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>彰化縣埔心鄉太平國民小學學生帳號查詢系統</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 PapaParse 用於解析 CSV -->
+  <script src="https://unpkg.com/papaparse@latest/papaparse.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+    <!-- 標題 -->
+    <h1 class="text-2xl font-bold text-center mb-4">彰化縣埔心鄉太平國民小學學生帳號查詢系統</h1>
+    <!-- 輸入表單 -->
+    <div class="mb-4">
+      <label for="seatNo" class="block text-sm font-medium text-gray-700">請輸入您的年級班級座號，(例如六甲1號請輸入60101):</label>
+      <input
+        type="text"
+        id="seatNo"
+        class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="輸入年級班級座號"
+      >
+    </div>
+    <!-- 驗證碼區域 -->
+    <div class="mb-4">
+      <label for="captcha" class="block text-sm font-medium text-gray-700">請輸入驗證碼：</label>
+      <div class="flex items-center space-x-2">
+        <span id="captchaText" class="bg-gray-200 p-2 rounded-md font-mono text-lg"></span>
+        <button
+          id="refreshCaptcha"
+          class="text-blue-500 hover:text-blue-700"
+          title="重新整理驗證碼"
+        >
+          ↻ 重新整理
+        </button>
+      </div>
+      <input
+        type="text"
+        id="captcha"
+        class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="輸入驗證碼"
+      >
+    </div>
+    <button
+      id="searchBtn"
+      class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition"
+      disabled
+    >
+      查詢
+    </button>
+    <!-- 模態視窗 -->
+    <div id="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+        <h2 class="text-lg font-semibold mb-4">查詢結果</h2>
+        <p id="modalContent" class="mb-4"></p>
+        <button
+          id="closeModal"
+          class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition"
+        >
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 儲存 CSV 資料
+    let accountData = [];
+    let currentCaptcha = '';
+
+    // 生成隨機 4 位數字驗證碼
+    function generateCaptcha() {
+      currentCaptcha = Math.floor(1000 + Math.random() * 9000).toString();
+      document.getElementById('captchaText').textContent = currentCaptcha;
+    }
+
+    // 載入並解析 CSV 檔案
+    function loadCsvData() {
+      const csv = loadFileData("帳號.csv");
+      Papa.parse(csv, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim().replace(/^"|"$/g, ''),
+        transform: (value, header) => value.trim().replace(/^"|"$/g, ''),
+        complete: (results) => {
+          accountData = results.data;
+          document.getElementById('searchBtn').disabled = false;
+        },
+        error: (err) => {
+          console.error('解析 CSV 時發生錯誤:', err);
+          showModal('無法
